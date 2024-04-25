@@ -12,15 +12,15 @@ float D = 50.0f;
 void updateGraph(sfRenderWindow *window, sfVertexArray *lines, float mx, float my) {
     sfVertexArray_clear(lines);
     int numPoints = 1000;
-    float xmax = 2 * PI; // Максимальное значение аргумента
-    float xmin = 0;      // Минимальное значение аргумента
-    float dx = (xmax - xmin) / (numPoints - 1); // Шаг изменения аргумента
-    float ymin = 0;      // Минимальное значение функции
-    float ymax = 0;      // Максимальное значение функции
+    float xmax = 2 * PI; // Максимальне значення аргументу
+    float xmin = 0;      // Мінімальне значення аргументу
+    float dx = (xmax - xmin) / (numPoints - 1); // Крок зміни аргументу
+    float ymin = 0;      // Мінімальне значення функції
+    float ymax = 0;      // Максимальне значення функції
 
     float t, g, x, y;
 
-    // Вычисляем минимальное и максимальное значения функции
+    // Обчислюємо мінімальне та максимальне значення функції
     for (int i = 0; i < numPoints; ++i) {
         t = xmin + i * dx;
         g = (A / B) * t;
@@ -36,32 +36,48 @@ void updateGraph(sfRenderWindow *window, sfVertexArray *lines, float mx, float m
         }
     }
 
-    // Малюем координатные прямые Ox и Oy
+    // Малюємо координатні прямі Ox та Oy
     sfVertexArray *Ox = sfVertexArray_create();
     sfVertexArray *Oy = sfVertexArray_create();
     sfVertex vertex;
 
-    // Строим ось Y
+    // Побудова осі Y
     for (int i = -525; i < 525; ++i) {
-        vertex.position.x = WINDOW_WIDTH / 2; // Центрируем по X
-        vertex.position.y = WINDOW_HEIGHT / 2 - i; // Центрируем по Y
+        vertex.position.x = WINDOW_WIDTH / 2; // Центруємо по X
+        vertex.position.y = WINDOW_HEIGHT / 2 - i; // Центруємо по Y
         vertex.color = sfColor_fromRGB(255, 255, 255);
         sfVertexArray_append(Oy, vertex);
+
+        // Додамо позначки на кожну соту одиницю координатної осі
+        if (i % 100 == 0) {
+            sfVertex tick1 = { {WINDOW_WIDTH / 2 - 5, WINDOW_HEIGHT / 2 - i}, sfWhite };
+            sfVertex tick2 = { {WINDOW_WIDTH / 2 + 5, WINDOW_HEIGHT / 2 - i}, sfWhite };
+            sfVertexArray_append(Oy, tick1);
+            sfVertexArray_append(Oy, tick2);
+        }
     }
 
-    // Строим ось X
+    // Побудова осі X
     for (int i = -400; i < 400; ++i) {
-        vertex.position.x = WINDOW_WIDTH / 2 + i; // Центрируем по X
-        vertex.position.y = WINDOW_HEIGHT / 2; // Центрируем по Y
-        vertex.color = sfColor_fromRGB(255, 255, 255); // Белый цвет
+        vertex.position.x = WINDOW_WIDTH / 2 + i; // Центруємо по X
+        vertex.position.y = WINDOW_HEIGHT / 2; // Центруємо по Y
+        vertex.color = sfColor_fromRGB(255, 255, 255); // Білий колір
         sfVertexArray_append(Ox, vertex);
+
+        // Додамо позначки на кожну соту одиницю координатної осі
+        if (i % 100 == 0) {
+            sfVertex tick1 = { {WINDOW_WIDTH / 2 + i, WINDOW_HEIGHT / 2 - 5}, sfWhite };
+            sfVertex tick2 = { {WINDOW_WIDTH / 2 + i, WINDOW_HEIGHT / 2 + 5}, sfWhite };
+            sfVertexArray_append(Ox, tick1);
+            sfVertexArray_append(Ox, tick2);
+        }
     }
 
-    // Отображаем координатные прямые
+    // Відображаємо координатні прямі
     sfRenderWindow_drawVertexArray(window, Ox, NULL);
     sfRenderWindow_drawVertexArray(window, Oy, NULL);
 
-    // Малюем координатные оси
+    // Малюємо координатні осі
     sfVertex xAxis[] = { {0, WINDOW_HEIGHT / 2}, {WINDOW_WIDTH, WINDOW_HEIGHT / 2} };
     sfVertex yAxis[] = { {WINDOW_WIDTH / 2, 0}, {WINDOW_WIDTH / 2, WINDOW_HEIGHT} };
     sfVertexArray *axes = sfVertexArray_create();
@@ -72,7 +88,7 @@ void updateGraph(sfRenderWindow *window, sfVertexArray *lines, float mx, float m
     sfVertexArray_setPrimitiveType(axes, sfLines);
     sfRenderWindow_drawVertexArray(window, axes, NULL);
 
-    // Малюем график функции
+    // Малюємо графік функції
     for (int i = 0; i < numPoints; ++i) {
         t = xmin + i * dx;
         g = (A / B) * t;
@@ -85,39 +101,6 @@ void updateGraph(sfRenderWindow *window, sfVertexArray *lines, float mx, float m
     }
 
     sfRenderWindow_drawVertexArray(window, lines, NULL);
-
-    // Добавляем метки на оси X и Y в соответствии с масштабом
-    sfFont *font = sfFont_createFromFile("arial.ttf");
-    sfText *text = sfText_create();
-    sfText_setFont(text, font);
-    sfText_setCharacterSize(text, 10);
-    sfText_setFillColor(text, sfWhite);
-    sfText_setOutlineColor(text, sfBlack);
-    sfText_setOutlineThickness(text, 1);
-
-    // Метки на ось X
-    int xInterval = 50 * mx; // Интервал между метками на оси X
-    for (int i = -400; i < 400; i += xInterval) {
-        char buffer[16];
-        snprintf(buffer, sizeof(buffer), "%d", i);
-        sfText_setString(text, buffer);
-        sfFloatRect textBounds = sfText_getLocalBounds(text);
-        sfText_setPosition(text, (sfVector2f){WINDOW_WIDTH / 2 + i - textBounds.width / 2, WINDOW_HEIGHT / 2 + 5}); // Позиция текста
-        sfRenderWindow_drawText(window, text, NULL);
-    }
-    // Метки на ось Y
-    int yInterval = 50 * my; // Интервал между метками на оси Y
-    for (int i = -525; i < 525; i += yInterval) {
-        char buffer[16];
-        snprintf(buffer, sizeof(buffer), "%d", -i);
-        sfText_setString(text, buffer);
-        sfFloatRect textBounds = sfText_getLocalBounds(text);
-        sfText_setPosition(text, (sfVector2f){WINDOW_WIDTH / 2 + 5, WINDOW_HEIGHT / 2 - i - textBounds.height / 2}); // Позиция текста
-        sfRenderWindow_drawText(window, text, NULL);
-    }
-
-    sfText_destroy(text);
-    sfFont_destroy(font);
 }
 
 int main() {
@@ -125,10 +108,16 @@ int main() {
     sfRenderWindow *window = sfRenderWindow_create(mode, "Graph", sfClose, NULL);
 
     sfVertexArray *lines = sfVertexArray_create();
-
-    float mx = 1.0f; // Масштаб по оси X
-    float my = 1.0f; // Масштаб по оси Y
-
+sfFont *font = sfFont_createFromFile("arial.ttf");
+    sfText *text = sfText_create();
+    sfText_setString(text, "FIALKOVSKA OLGA KV-34");
+    sfText_setFont(text, font);
+    sfText_setCharacterSize(text, 24);
+    sfText_setFillColor(text, sfWhite);
+    sfFloatRect textBounds = sfText_getLocalBounds(text);
+    sfText_setPosition(text, (sfVector2f){WINDOW_WIDTH - textBounds.width - 10, 10}); // Позиція тексту
+float mx = 1.0f;
+    float my = 1.0f;
     while (sfRenderWindow_isOpen(window)) {
         sfEvent event;
         while (sfRenderWindow_pollEvent(window, &event)) {
@@ -136,10 +125,10 @@ int main() {
                 sfRenderWindow_close(window);
             else if (event.type == sfEvtMouseWheelScrolled) {
                 if (event.mouseWheelScroll.delta > 0) {
-                    mx *= 1.1f; // Увеличение масштаба при прокрутке вверх
+                    mx *= 1.1f; // Збільшення масштабу при прокрутці вгору
                     my *= 1.1f;
                 } else if (event.mouseWheelScroll.delta < 0) {
-                    mx *= 0.9f; // Уменьшение масштаба при прокрутке вниз
+                    mx *= 0.9f; // Зменшення масштабу при прокрутці вниз
                     my *= 0.9f;
                 }
             }
@@ -147,10 +136,13 @@ int main() {
 
         sfRenderWindow_clear(window, sfBlack);
         updateGraph(window, lines, mx, my);
+        sfRenderWindow_drawText(window, text, NULL); // Відображення тексту
         sfRenderWindow_display(window);
     }
 
     sfVertexArray_destroy(lines);
+    sfText_destroy(text);
+    sfFont_destroy(font);
     sfRenderWindow_destroy(window);
 
     return 0;
