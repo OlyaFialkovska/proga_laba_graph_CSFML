@@ -1,0 +1,199 @@
+#include <SFML/Graphics.h>
+#include <math.h>
+
+#define PI 3.14159265
+
+// Функція для знаходження найбільшого спільного дільника
+int gcd(int a, int b) {
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+void drawArrow(sfRenderTexture* texture, sfVector2f start, sfVector2f end, sfBool horizontal) {
+    float angle = atan2f(end.y - start.y, end.x - start.x) * 180 / PI;
+    float length = sqrtf(powf(end.x - start.x, 2) + powf(end.y - start.y, 2));
+    sfConvexShape* arrow = sfConvexShape_create();
+    sfConvexShape_setPointCount(arrow, 3);
+    sfConvexShape_setPoint(arrow, 0, (sfVector2f){0, 0});
+    sfConvexShape_setPoint(arrow, 1, (horizontal ? (sfVector2f){-10, -5} : (sfVector2f){10, -5}));
+    sfConvexShape_setPoint(arrow, 2, (horizontal ? (sfVector2f){-10, 5} : (sfVector2f){10, 5}));
+    sfConvexShape_setFillColor(arrow, sfWhite);
+    sfConvexShape_setRotation(arrow, angle);
+    sfConvexShape_setPosition(arrow, end);
+    sfRenderTexture_drawConvexShape(texture, arrow, NULL);
+}
+
+void drawGraph(sfRenderTexture* texture, float A, float B, float D, int numPoints, float xmin, float xmax, float ymin, float ymax) {
+    float dx = (xmax - xmin) / (numPoints - 1);
+    float x[numPoints];
+    float y[numPoints];
+    for (int i = 0; i < numPoints; ++i) {
+        float t = xmin + i * dx;
+        float g = (A / B) * t;
+        x[i] = (A - B) * cos(t) + D * cos(g);
+        y[i] = (A - B) * sin(t) - D * sin(g);
+    }
+
+    float centerX = 400.0f;
+    float centerY = 500.0f;
+
+    float scaleX = 700 / (xmax - xmin);
+    float scaleY = 400 / (ymax - ymin);
+
+    sfVertexArray* graph = sfVertexArray_create();
+    for (int i = 0; i < numPoints; ++i) {
+        sfVertex vertex = {
+            {centerX + (x[i] - xmin) * scaleX, centerY - (y[i] - ymin) * scaleY},
+            sfWhite
+        };
+        sfVertexArray_append(graph, vertex);
+    }
+    sfRenderTexture_drawVertexArray(texture, graph, NULL);
+    sfVertexArray_destroy(graph);
+}
+
+int main() {
+    sfVideoMode mode = {980, 600, 32};
+    sfRenderWindow* window = sfRenderWindow_create(mode, "Graph", sfResize | sfClose, NULL);
+    if (!window)
+        return 1;
+
+    sfRenderTexture* texture = sfRenderTexture_create(1080, 600, 0);
+    sfRenderTexture_clear(texture, sfBlack);
+
+    // Малювання координатних осей та стрілок
+    sfVertex horizontalLine[] = {
+        {{100, 300}, sfWhite},
+        {{700, 300}, sfWhite}
+    };
+    sfRenderTexture_drawPrimitives(texture, horizontalLine, 2, sfLines, NULL);
+    drawArrow(texture, (sfVector2f){100, 300}, (sfVector2f){700, 300}, sfTrue);
+     // Рисование подписи на горизонтальной оси
+    sfFont* font = sfFont_createFromFile("calibri.ttf");
+    sfText* textX = sfText_create();
+    sfText_setFont(textX, font);
+    sfText_setCharacterSize(textX, 20);
+    sfText_setString(textX, "x");
+    sfText_setPosition(textX, (sfVector2f){690, 300});
+    sfText_setFillColor(textX, sfWhite);
+    sfRenderTexture_drawText(texture, textX, NULL);
+
+    // Рисование делений на горизонтальной оси
+    for (int i = 1; i < 30; ++i) {
+        sfVertex tick[] = {
+            {{100 + i * 20, 295}, sfWhite},
+            {{100 + i * 20, 305}, sfWhite}
+        };
+        sfRenderTexture_drawPrimitives(texture, tick, 2, sfLines, NULL);
+    }
+    // Додавання цифр до горизонтальної осі
+    for (int i = -14; i <= 14; ++i) {
+        int value = i ;
+        sfFont* font = sfFont_createFromFile("calibri.ttf");
+        sfText* text = sfText_create();
+        sfText_setFont(text, font);
+        sfText_setCharacterSize(text, 10);
+        char str[5];
+        sprintf(str, "%d", value);
+        sfText_setString(text, str);
+        sfText_setPosition(text, (sfVector2f){400+ i * 20 - 5, 310});
+        sfText_setFillColor(text, sfWhite);
+        sfRenderTexture_drawText(texture, text, NULL);
+        sfText_destroy(text);
+        sfFont_destroy(font);
+    }
+    sfVertex verticalLine[] = {
+        {{400, 100}, sfWhite},
+        {{400, 500}, sfWhite}
+    };
+    sfRenderTexture_drawPrimitives(texture, verticalLine, 2, sfLines, NULL);
+    drawArrow(texture, (sfVector2f){400, 99}, (sfVector2f){400, 100}, sfFalse);
+    // Рисование подписи на вертикальной оси
+    sfText* textY = sfText_create();
+    sfText_setFont(textY, font);
+    sfText_setCharacterSize(textY, 20);
+    sfText_setString(textY, "y");
+    sfText_setPosition(textY, (sfVector2f){380, 90});
+    sfText_setFillColor(textY, sfWhite);
+    sfRenderTexture_drawText(texture, textY, NULL);
+
+    // Рисование делений на вертикальной оси
+    for (int i = 1; i < 20; ++i) {
+        sfVertex tick[] = {
+            {{395, 100 + i * 20}, sfWhite},
+            {{405, 100 + i * 20}, sfWhite}
+        };
+        sfRenderTexture_drawPrimitives(texture, tick, 2, sfLines, NULL);
+    }
+      for (int i = -9; i <= 9; ++i) {
+        int value = i ;
+        sfFont* font = sfFont_createFromFile("calibri.ttf");
+        sfText* text = sfText_create();
+        sfText_setFont(text, font);
+        sfText_setCharacterSize(text, 10);
+        char str[5];
+        sprintf(str, "%d", value);
+        sfText_setString(text, str);
+        sfText_setPosition(text, (sfVector2f){410, 300 - i * 20 + 5});
+        sfText_setFillColor(text, sfWhite);
+        sfRenderTexture_drawText(texture, text, NULL);
+        sfText_destroy(text);
+        sfFont_destroy(font);
+    }
+
+    // Малювання графіка
+    float A = 3.0f;
+    float B = 5.0f;
+    float D = 5.0f;
+    int numPoints = 1000;
+    float xmin = 0.0f;
+    float xmax = 2 * PI * (B / gcd(A, B));
+    float ymin = -10.0f; // Ви можете встановити це значення відповідно до вашого графіка
+    float ymax = 10.0f;  // Ви можете встановити це значення відповідно до вашого графіка
+    drawGraph(texture, A, B, D, numPoints, xmin, xmax, ymin, ymax);
+
+    // Додавання зображення математичної формули
+    sfTexture* formulaTexture = sfTexture_createFromFile("formula.png", NULL);
+    sfSprite* formulaSprite = sfSprite_create();
+    sfSprite_setTexture(formulaSprite, formulaTexture, sfTrue);
+    sfVector2f formulaPosition = {550, 60}; // Позиція зображення формули
+    sfSprite_setPosition(formulaSprite, formulaPosition);
+    sfRenderTexture_drawSprite(texture, formulaSprite, NULL);
+
+    // Додавання прізвища студента
+    sfText* studentName = sfText_create();
+    sfText_setFont(studentName, font);
+    sfFont_createFromFile("calibri.ttf");
+    sfText_setCharacterSize(studentName, 18);
+    sfText_setString(studentName, "Fialkovska Olya KV-34");
+    sfText_setPosition(studentName, (sfVector2f){600, 20});
+    sfText_setFillColor(studentName, sfWhite);
+    sfRenderTexture_drawText(texture, studentName, NULL);
+
+    // Відображення графіка на вікні
+    sfRenderTexture_display(texture);
+    sfSprite* sprite = sfSprite_create();
+    sfSprite_setTexture(sprite, sfRenderTexture_getTexture(texture), sfTrue);
+
+    while (sfRenderWindow_isOpen(window)) {
+        sfEvent event;
+        while (sfRenderWindow_pollEvent(window, &event)) {
+            if (event.type == sfEvtClosed)
+                sfRenderWindow_close(window);
+        }
+        sfRenderWindow_clear(window, sfBlack);
+        sfRenderWindow_drawSprite(window, sprite, NULL);
+        sfRenderWindow_display(window);
+    }
+
+    // Очищення ресурсів
+    sfSprite_destroy(sprite);
+    sfRenderTexture_destroy(texture);
+    sfRenderWindow_destroy(window);
+
+    return 0;
+}
