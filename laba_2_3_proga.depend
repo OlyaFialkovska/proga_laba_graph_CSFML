@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1713987495 source:d:\univer\programming\laba_2_3_proga\code_graphic.c
+	<math.h>
+	<SFML/Graphics.h>
+	<math.h>
+	<stdio.h>
+	<SFML/Graphics.h>
+	<math.h>
+
